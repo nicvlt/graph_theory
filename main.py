@@ -1,5 +1,5 @@
 class Node:
-    def __init__(self, letter='x', in_neighbor=['None'], duration=0) -> None:
+    def __init__(self, letter='x', in_neighbor='None', duration=0) -> None:
         self.letter = letter
         self.in_neighbor = in_neighbor
         self.duration = duration
@@ -16,13 +16,16 @@ def clean_line(line):
 
 def init_nodes(file_name):
     nodes = []
-    with open(file_name, 'r') as f:
-        for line in f:
-            line = line.split(' ')
-            line = clean_line(line)
-            globals()['node_{}'.format(line[0])] = Node(
-                line[0], ('None', line[2:])[len(line) > 2], line[1])
-            nodes.append(globals()['node_{}'.format(line[0])])
+    try:
+        with open(file_name, 'r') as f:
+            for line in f:
+                line = line.split(' ')
+                line = clean_line(line)
+                globals()['node_{}'.format(line[0])] = Node(
+                    line[0], ('None', line[2:])[len(line) > 2], line[1])
+                nodes.append(globals()['node_{}'.format(line[0])])
+    except FileNotFoundError:
+        return 'File not found'
     return nodes
 
 
@@ -59,11 +62,20 @@ def standardize_nodes(nodes):
 
 
 def main():
-    file_name = input('Enter file name: ')
-    nodes = init_nodes('./assets/{}.txt'.format(file_name))
-    nodes = standardize_nodes(nodes)
-    for node in nodes:
-        print(node.__str__())
+    play = True
+    while play:
+
+        file_name = input('Enter file name: ')
+
+        nodes = init_nodes('./assets/{}.txt'.format(file_name))
+        if nodes == 'File not found':
+            print('File not found')
+            continue
+        nodes = standardize_nodes(nodes)
+        for node in nodes:
+            print(node.__str__())
+
+        play = input('Do you want to continue? (y/n): ') == 'y'
 
 
 main()
