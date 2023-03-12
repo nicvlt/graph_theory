@@ -40,8 +40,8 @@ def standardize_nodes(nodes):
     nodes.insert(0, node_a)
 
     # create node omega
-    omega = len(nodes)+1
-    globals()['node_{}'.format(omega)] = Node(omega, ['None'], 0)
+    omega = len(nodes)
+    globals()['node_{}'.format(omega)] = Node(str(omega), ['None'], 0)
     nodes.append(globals()['node_{}'.format(omega)])
 
     # add omega to all nodes that don't have out neighbors
@@ -53,12 +53,41 @@ def standardize_nodes(nodes):
             if node1.letter in node2.in_neighbor:
                 has_out_neighbor = True
                 break
-        if not has_out_neighbor:
+        if not has_out_neighbor and node1.letter != str(omega):
             globals()['node_{}'.format(omega)
                       ].in_neighbor.append(node1.letter)
 
     globals()['node_{}'.format(omega)].in_neighbor.remove('None')
     return nodes
+
+
+def display_adjacency_matrix(nodes):
+    # Create a list of node letters in the order they appear in the nodes array
+    node_letters = [node.letter for node in nodes]
+
+    # Create an empty matrix with the same number of rows and columns as the nodes array
+    matrix = [[' ' for _ in range(len(nodes))] for _ in range(len(nodes))]
+
+    # Fill in the matrix based on the in_neighbor attribute of each node
+    for i, node in enumerate(nodes):
+        for neighbor_letter in node.in_neighbor:
+            if neighbor_letter in node_letters:
+                in_neighbor_index = node_letters.index(neighbor_letter)
+                matrix[in_neighbor_index][i] = '1'
+
+    # Print the matrix with formatted spaces and lines separating the rows and columns
+    max_num_width = max(len(str(len(nodes))), len(max(node_letters, key=len)))
+    line = '+' + '-' * (max_num_width + 1) + '+'
+    header = ('| {:^{width}} | ' + ' | '.join(['{:^{width}}']*len(
+        node_letters)) + ' |').format('', *node_letters, width=max_num_width)
+    print(header)
+    print(line + line.replace('-', '=') * len(node_letters))
+    for i, row in enumerate(matrix):
+        row_label = node_letters[i].rjust(max_num_width)
+        row_str = ' | '.join([str(x).ljust(max_num_width) for x in row])
+        print(('| {:^{width}} | ' + row_str +
+              ' |').format(row_label, width=max_num_width))
+        print(line + line.replace('-', '=') * len(node_letters))
 
 
 def main():
@@ -72,6 +101,7 @@ def main():
             print('File not found')
             continue
         nodes = standardize_nodes(nodes)
+        display_adjacency_matrix(nodes)
         for node in nodes:
             print(node.__str__())
 
