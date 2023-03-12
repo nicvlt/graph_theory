@@ -1,5 +1,5 @@
 class Node:
-    def __init__(self, letter='C', in_neighbor='None', duration=0) -> None:
+    def __init__(self, letter='x', in_neighbor='None', duration=0) -> None:
         self.letter = letter
         self.in_neighbor = in_neighbor
         self.duration = duration
