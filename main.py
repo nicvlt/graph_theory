@@ -1,16 +1,26 @@
+import os
+
+
 class Node:
-    def __init__(self, letter='x', in_neighbor='None', duration=0) -> None:
+    def __init__(self, letter='x', in_neighbor='None', duration=0, rank=-1) -> None:
         self.letter = letter
         self.in_neighbor = in_neighbor
         self.duration = duration
+        self.rank = rank
 
     def __str__(self) -> str:
-        return 'Node: {} | In Neigh: {} | Duration: {}'.format(self.letter, self.in_neighbor, self.duration)
+        return 'Node: {} | In Neigh: {} | Duration: {} | Rank: {}'.format(self.letter, self.in_neighbor, self.duration, self.rank)
+
+
+def clear_terminal():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 
 def clean_line(line):
     for i in range(len(line)):
         line[i] = line[i].replace('\n', '')
+    if line[-1] == '':
+        line.pop()
     return line
 
 
@@ -22,7 +32,7 @@ def init_nodes(file_name):
                 line = line.split(' ')
                 line = clean_line(line)
                 globals()['node_{}'.format(line[0])] = Node(
-                    line[0], ('None', line[2:])[len(line) > 2], line[1])
+                    line[0], ('None', line[2:])[len(line) > 2], int(line[1]))
                 nodes.append(globals()['node_{}'.format(line[0])])
     except FileNotFoundError:
         return 'File not found'
@@ -62,6 +72,9 @@ def standardize_nodes(nodes):
 
 
 def display_adjacency_matrix(nodes):
+
+    print('\n\nAdjacency Matrix:\n\n')
+
     # Create a list of node letters in the order they appear in the nodes array
     node_letters = [node.letter for node in nodes]
 
@@ -90,7 +103,77 @@ def display_adjacency_matrix(nodes):
         print(line + line.replace('-', '=') * len(node_letters))
 
 
+def reset_ranks(nodes):
+    for node in nodes:
+        node.rank = -1
+    return nodes
+
+
+def has_cycle(nodes):
+    for node in nodes:
+        if node.rank == -1:
+            nodes = reset_ranks(nodes)
+            return True
+    return False
+
+
+def has_negative_edge(nodes):
+    for node in nodes:
+        if node.duration < 0:
+            return True
+    return False
+
+
+def check_rank_condition(nodes):
+    for node in nodes:
+        if node.in_neighbor == 'None':
+            return False
+    return True
+
+
+def get_ranks(nodes, copy_nodes):
+    step = 0
+    while(not check_rank_condition(copy_nodes)):
+        letters_to_remove = []
+        if len(copy_nodes) == 0:
+            return nodes
+        for c_node in copy_nodes:
+            if c_node.in_neighbor == 'None':
+                for node2 in nodes:
+                    if c_node.letter == node2.letter:
+                        node2.rank = step
+                letters_to_remove.append(c_node.letter)
+        for letter in letters_to_remove:
+            for node in copy_nodes:
+                if letter in node.in_neighbor:
+                    node.in_neighbor.remove(letter)
+                if node.in_neighbor == []:
+                    node.in_neighbor = 'None'
+            copy_nodes = [node for node in copy_nodes if node.letter != letter]
+
+        step += 1
+    return nodes
+
+
+def is_scheduling_graph(file_name, nodes):
+    copy_nodes = init_nodes('./assets/{}.txt'.format(file_name))
+    copy_nodes = standardize_nodes(copy_nodes)
+    nodes = get_ranks(nodes, copy_nodes)
+    res = []
+
+    if has_cycle(nodes):
+        res.append(1)
+    if has_negative_edge(nodes):
+        res.append(2)
+    return ([0], res)[len(res) > 0]
+
+
 def main():
+
+    clear_terminal()
+
+    print('\n\n\nWELCOME !\n\n\n')
+
     play = True
     while play:
 
@@ -102,10 +185,21 @@ def main():
             continue
         nodes = standardize_nodes(nodes)
         display_adjacency_matrix(nodes)
-        for node in nodes:
-            print(node.__str__())
+
+        if 0 in is_scheduling_graph(file_name, nodes):
+            print('\n\nThis is a scheduling graph\n\n')
+            for node in nodes:
+                print(node.__str__())
+        else:
+            print('\n\nThis is not a scheduling graph :')
+            if 1 in is_scheduling_graph(file_name, nodes):
+                print('- There is a cycle in the graph.')
+            if 2 in is_scheduling_graph(file_name, nodes):
+                print('- There is a negative edge in the graph.')
+            print('\n\n')
 
         play = input('Do you want to continue? (y/n): ') == 'y'
+        clear_terminal()
 
 
 main()
