@@ -2,14 +2,15 @@ import os
 
 
 class Node:
-    def __init__(self, letter='x', in_neighbor='None', duration=0, rank=-1) -> None:
+    def __init__(self, letter='x', in_neighbor='None', duration=0, rank=-1, earliest_date=-1) -> None:
         self.letter = letter
         self.in_neighbor = in_neighbor
         self.duration = duration
         self.rank = rank
+        self.earliest_date = earliest_date
 
     def __str__(self) -> str:
-        return 'Node: {} | In Neigh: {} | Duration: {} | Rank: {}'.format(self.letter, self.in_neighbor, self.duration, self.rank)
+        return 'Node: {} | In Neigh: {} | Duration: {} | Rank: {} | Earliest date: {}'.format(self.letter, self.in_neighbor, self.duration, self.rank, self.earliest_date)
 
 
 def clear_terminal():
@@ -168,28 +169,68 @@ def is_scheduling_graph(file_name, nodes):
     return ([0], res)[len(res) > 0]
 
 
+def compute_earliest_dates(nodes):
+    sorted_rank = sorted(nodes, key=lambda x: x.rank)
+    dict_earliest_date = {node.letter: 0 for node in sorted_rank}
+    for node in sorted_rank:
+        if node.in_neighbor == 'None':
+            dict_earliest_date[node.letter] = 0
+        else:
+
+            # get max_earliest_date between all neighbors
+            max_earliest_date = 0
+            for neighbor in node.in_neighbor:
+
+                # get neighbor duration
+                neighbor_duration = 0
+                for node2 in nodes:
+                    if node2.letter == neighbor:
+                        neighbor_duration = node2.duration
+                        break
+
+                # compare with max_earliest_date
+                if dict_earliest_date[neighbor] + neighbor_duration > max_earliest_date:
+                    max_earliest_date = dict_earliest_date[neighbor] + \
+                        neighbor_duration
+
+            # found max_earliest_date, assign to dict_earliest_date
+            dict_earliest_date[node.letter] = max_earliest_date
+
+    return dict_earliest_date
+
+
 def main():
-
     clear_terminal()
-
     print('\n\n\nWELCOME !\n\n\n')
-
     play = True
     while play:
 
+        # Initialize the nodes array with text file input
         file_name = input('Enter file name: ')
-
         nodes = init_nodes('./assets/{}.txt'.format(file_name))
         if nodes == 'File not found':
             print('File not found')
             continue
+
+        # Standardize the nodes array
         nodes = standardize_nodes(nodes)
+
+        # Display the adjacency matrix
         display_adjacency_matrix(nodes)
 
+        # Check if the graph is a scheduling graph & compute ranks
         if 0 in is_scheduling_graph(file_name, nodes):
-            print('\n\nThis is a scheduling graph\n\n')
+            print('\n\nThis is a scheduling graph.\n\n')
+            print('Ranks: ')
             for node in nodes:
                 print(node.__str__())
+
+            # Compute earliest dates
+            earliest_dates = compute_earliest_dates(nodes)
+            print('\n\nEarliest dates:')
+            print(earliest_dates)
+            print('\n\n')
+
         else:
             print('\n\nThis is not a scheduling graph :')
             if 1 in is_scheduling_graph(file_name, nodes):
@@ -198,6 +239,7 @@ def main():
                 print('- There is a negative edge in the graph.')
             print('\n\n')
 
+        # Ask the user if he wants to continue
         play = input('Do you want to continue? (y/n): ') == 'y'
         clear_terminal()
 
