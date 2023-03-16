@@ -10,11 +10,16 @@ class Node:
         self.rank = rank
 
     def __str__(self) -> str:
-        return 'Node: {} | In Neigh: {} | Duration: {} | Rank: {}'.format(self.letter, self.in_neighbor, self.duration, self.rank)
+        return 'Node: {} | In Neigh: {} | Duration: {} | Rank: {}\n'.format(self.letter, self.in_neighbor, self.duration, self.rank)
 
 
 def clear_terminal():
     os.system('cls' if os.name == 'nt' else 'clear')
+
+def create_output_file(file_name, string_to_write):
+    with open('./outputs/{}_output.txt'.format(file_name), 'w') as f:
+        f.write(string_to_write)
+    print('\nOutput file created: {}_output.txt\n'.format(file_name))
 
 
 def clean_line(line):
@@ -74,7 +79,7 @@ def standardize_nodes(nodes):
 
 def display_adjacency_matrix(nodes):
 
-    print('\n\nAdjacency Matrix:\n\n')
+    output = ""
 
     # Create a list of node letters in the order they appear in the nodes array
     node_letters = [node.letter for node in nodes]
@@ -94,15 +99,15 @@ def display_adjacency_matrix(nodes):
     line = '+' + '-' * (max_num_width + 1) + '+'
     header = ('| {:^{width}} | ' + ' | '.join(['{:^{width}}']*len(
         node_letters)) + ' |').format('', *node_letters, width=max_num_width)
-    print(header)
-    print(line + line.replace('-', '=') * len(node_letters))
+    output += (header + '\n')
+    output += (line + line.replace('-', '=') * len(node_letters) + '\n')
     for i, row in enumerate(matrix):
         row_label = node_letters[i].rjust(max_num_width)
         row_str = ' | '.join([str(x).ljust(max_num_width) for x in row])
-        print(('| {:^{width}} | ' + row_str +
-              ' |').format(row_label, width=max_num_width))
-        print(line + line.replace('-', '=') * len(node_letters))
-
+        output += (('| {:^{width}} | ' + row_str +
+              ' |').format(row_label, width=max_num_width)) + '\n'
+        output += (line + line.replace('-', '=') * len(node_letters)) + '\n'
+    return output
 
 def reset_ranks(nodes):
     for node in nodes:
@@ -243,57 +248,60 @@ def main():
     play = True
     while play:
 
+        # Initialize the string that will be the output file
+        output = ''
+
         # Initialize the nodes array with text file input
         file_name = input('Enter file name: ')
         nodes = init_nodes('./assets/{}.txt'.format(file_name))
         if nodes == 'File not found':
-            print('File not found')
+            print('\nFile not found\n')
             continue
 
         # Standardize the nodes array
         nodes = standardize_nodes(nodes)
 
         # Display the adjacency matrix
-        display_adjacency_matrix(nodes)
+        output += '\nAdjacency Matrix:\n\n'
+        output += display_adjacency_matrix(nodes)
 
         # Check if the graph is a scheduling graph & compute ranks
         if 0 in is_scheduling_graph(file_name, nodes):
-            print('\n\nThis is a scheduling graph.\n\n')
-            print('Ranks: ')
+            output += ('\nThis is a scheduling graph.\n\n')
+            output += ('Ranks: ') + '\n'
             for node in nodes:
-                print(node.__str__())
+                output += (node.__str__())
 
             # Compute earliest dates
             earliest_dates = compute_earliest_dates(nodes)
-            print('\n\nEarliest dates:')
-            print(earliest_dates)
-            print('\n\n')
+            output += str('\n\nEarliest dates:') + '\n'
+            output += str(earliest_dates)
+            output += ('\n\n')
 
             # Compute latest dates
             latest_dates = compute_latest_dates(nodes, earliest_dates)
-            print('\n\nLatest dates:')
-            print(latest_dates)
-            print('\n\n')
+            output += ('\n\nLatest dates:') + '\n'
+            output += str(latest_dates)
+            output += ('\n\n')
 
             # Compute total float
             total_float = compute_total_float(nodes, earliest_dates, latest_dates)
-            print('\n\nTotal float:')
-            print(total_float)
-            print('\n\n')
+            output += ('\n\nTotal float:') + '\n'
+            output += str(total_float)
+            output += ('\n\n')
 
             # Compute critical path
             critical_path = compute_critical_path(nodes, earliest_dates, latest_dates)
-            print('\n\nCritical path:')
-            print(critical_path)
-            print('\n\n')
+            output += ('\n\nCritical path:') + '\n'
+            output += str(critical_path)
 
         else:
-            print('\n\nThis is not a scheduling graph :')
+            output +=('\n\nThis is not a scheduling graph :') + '\n'
             if 1 in is_scheduling_graph(file_name, nodes):
-                print('- There is a cycle in the graph.')
+                output +=('- There is a cycle in the graph.') + '\n'
             if 2 in is_scheduling_graph(file_name, nodes):
-                print('- There is a negative edge in the graph.')
-            print('\n\n')
+                output +=('- There is a negative edge in the graph.')+ '\n'
+        create_output_file(file_name, output)
 
         # Ask the user if he wants to continue
         play = input('Do you want to continue? (y/n): ') == 'y'
