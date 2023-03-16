@@ -3,15 +3,14 @@ import math
 
 
 class Node:
-    def __init__(self, letter='x', in_neighbor='None', duration=0, rank=-1, earliest_date=-1) -> None:
+    def __init__(self, letter='x', in_neighbor='None', duration=0, rank=-1) -> None:
         self.letter = letter
         self.in_neighbor = in_neighbor
         self.duration = duration
         self.rank = rank
-        self.earliest_date = earliest_date
 
     def __str__(self) -> str:
-        return 'Node: {} | In Neigh: {} | Duration: {} | Rank: {} | Earliest date: {}'.format(self.letter, self.in_neighbor, self.duration, self.rank, self.earliest_date)
+        return 'Node: {} | In Neigh: {} | Duration: {} | Rank: {}'.format(self.letter, self.in_neighbor, self.duration, self.rank)
 
 
 def clear_terminal():
@@ -221,7 +220,22 @@ def compute_latest_dates(nodes, earliest_dates):
                 if dict_latest_date[successor] < min_latest_date:
                     min_latest_date = dict_latest_date[successor]
             dict_latest_date[node.letter] = min_latest_date - node.duration
+    
+    dict_latest_date = {k: dict_latest_date[k] for k in earliest_dates}
     return dict_latest_date
+
+def compute_total_float(nodes, earliest_dates, latest_dates):
+    dict_total_float = {node.letter: 0 for node in nodes}
+    for node in nodes:
+        dict_total_float[node.letter] = latest_dates[node.letter] - earliest_dates[node.letter]
+    return dict_total_float
+
+def compute_critical_path(nodes, earliest_dates, latest_dates):
+    critical_path = []
+    for node in nodes:
+        if earliest_dates[node.letter] == latest_dates[node.letter]:
+            critical_path.append(node.letter)
+    return critical_path
 
 def main():
     clear_terminal()
@@ -259,6 +273,18 @@ def main():
             latest_dates = compute_latest_dates(nodes, earliest_dates)
             print('\n\nLatest dates:')
             print(latest_dates)
+            print('\n\n')
+
+            # Compute total float
+            total_float = compute_total_float(nodes, earliest_dates, latest_dates)
+            print('\n\nTotal float:')
+            print(total_float)
+            print('\n\n')
+
+            # Compute critical path
+            critical_path = compute_critical_path(nodes, earliest_dates, latest_dates)
+            print('\n\nCritical path:')
+            print(critical_path)
             print('\n\n')
 
         else:
