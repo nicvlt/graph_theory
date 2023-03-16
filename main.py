@@ -1,4 +1,5 @@
 import os
+import math
 
 
 class Node:
@@ -198,6 +199,29 @@ def compute_earliest_dates(nodes):
 
     return dict_earliest_date
 
+def get_successors(nodes, node_letter):
+    successors = []
+    for node in nodes:
+        if node_letter in node.in_neighbor:
+            successors.append(node.letter)
+    if successors == []:
+        successors = 'None'
+    return successors
+
+def compute_latest_dates(nodes, earliest_dates):
+    sorted_rank = sorted(nodes, key=lambda x: x.rank, reverse=True)
+    dict_latest_date = {node.letter: 0 for node in sorted_rank}
+    for node in sorted_rank:
+        successors = get_successors(nodes, node.letter)
+        if successors == 'None':
+            dict_latest_date[node.letter] = earliest_dates[node.letter]
+        else:
+            min_latest_date = math.inf
+            for successor in successors:
+                if dict_latest_date[successor] < min_latest_date:
+                    min_latest_date = dict_latest_date[successor]
+            dict_latest_date[node.letter] = min_latest_date - node.duration
+    return dict_latest_date
 
 def main():
     clear_terminal()
@@ -229,6 +253,12 @@ def main():
             earliest_dates = compute_earliest_dates(nodes)
             print('\n\nEarliest dates:')
             print(earliest_dates)
+            print('\n\n')
+
+            # Compute latest dates
+            latest_dates = compute_latest_dates(nodes, earliest_dates)
+            print('\n\nLatest dates:')
+            print(latest_dates)
             print('\n\n')
 
         else:
