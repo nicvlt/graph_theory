@@ -235,11 +235,27 @@ def compute_total_float(nodes, earliest_dates, latest_dates):
         dict_total_float[node.letter] = latest_dates[node.letter] - earliest_dates[node.letter]
     return dict_total_float
 
+def compupte_free_float(nodes, earliest_dates, latest_dates):
+    dict_free_float = {node.letter: 0 for node in nodes}
+    for node in nodes:
+        successors = get_successors(nodes, node.letter)
+        if successors == 'None':
+            dict_free_float[node.letter] = 0
+        else:
+            min_latest_date = math.inf
+            for successor in successors:
+                if latest_dates[successor] < min_latest_date:
+                    min_latest_date = latest_dates[successor]
+            dict_free_float[node.letter] = min_latest_date - earliest_dates[node.letter] - node.duration
+    return dict_free_float
+
 def compute_critical_path(nodes, earliest_dates, latest_dates):
     critical_path = []
     for node in nodes:
         if earliest_dates[node.letter] == latest_dates[node.letter]:
             critical_path.append(node.letter)
+    # sort critical path by rank
+    critical_path = sorted(critical_path, key=lambda x: [node.rank for node in nodes if node.letter == x][0])
     return critical_path
 
 def main():
@@ -284,6 +300,12 @@ def main():
             output += str(latest_dates)
             output += ('\n\n')
 
+            # Compute free float
+            free_float = compupte_free_float(nodes, earliest_dates, latest_dates)
+            output += ('\n\nFree float:') + '\n'
+            output += str(free_float)
+            output += ('\n\n')
+
             # Compute total float
             total_float = compute_total_float(nodes, earliest_dates, latest_dates)
             output += ('\n\nTotal float:') + '\n'
@@ -300,7 +322,7 @@ def main():
             if 1 in is_scheduling_graph(file_name, nodes):
                 output +=('- There is a cycle in the graph.') + '\n'
             if 2 in is_scheduling_graph(file_name, nodes):
-                output +=('- There is a negative edge in the graph.')+ '\n'
+                output +=('- There is a negative edge in the graph.')+ '\n' 
         create_output_file(file_name, output)
 
         # Ask the user if he wants to continue
