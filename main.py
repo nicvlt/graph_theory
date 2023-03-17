@@ -1,6 +1,6 @@
 import os
 import math
-
+import pandas as pd
 
 class Node:
     def __init__(self, letter='x', in_neighbor='None', duration=0, rank=-1) -> None:
@@ -287,29 +287,30 @@ def main():
             output += ('Ranks: ') + '\n'
             for node in nodes:
                 output += (node.__str__())
+            output += ('\n\n')
 
             # Compute earliest dates
             earliest_dates = compute_earliest_dates(nodes)
-            output += str('\n\nEarliest dates:') + '\n'
-            output += str(earliest_dates)
+            df_earliest_dates = pd.DataFrame.from_dict(earliest_dates, orient='index', columns=['Earliest date'])
+            output += str(df_earliest_dates)
             output += ('\n\n')
 
             # Compute latest dates
             latest_dates = compute_latest_dates(nodes, earliest_dates)
-            output += ('\n\nLatest dates:') + '\n'
-            output += str(latest_dates)
+            df_latest_dates = pd.DataFrame.from_dict(latest_dates, orient='index', columns=['Latest date'])
+            output += str(df_latest_dates)
             output += ('\n\n')
 
             # Compute free float
             free_float = compupte_free_float(nodes, earliest_dates, latest_dates)
-            output += ('\n\nFree float:') + '\n'
-            output += str(free_float)
+            df_free_float = pd.DataFrame.from_dict(free_float, orient='index', columns=['Free float'])
+            output += str(df_free_float)
             output += ('\n\n')
 
             # Compute total float
             total_float = compute_total_float(nodes, earliest_dates, latest_dates)
-            output += ('\n\nTotal float:') + '\n'
-            output += str(total_float)
+            df_total_float = pd.DataFrame.from_dict(total_float, orient='index', columns=['Total float'])
+            output += str(df_total_float)
             output += ('\n\n')
 
             # Compute critical path
