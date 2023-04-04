@@ -12,7 +12,6 @@ class Node:
     def __str__(self) -> str:
         return 'Node: {} | In Neigh: {} | Duration: {} | Rank: {}\n'.format(self.letter, self.in_neighbor, self.duration, self.rank)
 
-
 def clear_terminal():
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -21,14 +20,12 @@ def create_output_file(file_name, string_to_write):
         f.write(string_to_write)
     print('\nOutput file created: {}_output.txt\n'.format(file_name))
 
-
 def clean_line(line):
     for i in range(len(line)):
         line[i] = line[i].replace('\n', '')
     if line[-1] == '':
         line.pop()
     return line
-
 
 def init_nodes(file_name):
     nodes = []
@@ -43,7 +40,6 @@ def init_nodes(file_name):
     except FileNotFoundError:
         return 'File not found'
     return nodes
-
 
 def standardize_nodes(nodes):
     # add alpha node as supersource
@@ -75,7 +71,6 @@ def standardize_nodes(nodes):
 
     globals()['node_{}'.format(omega)].in_neighbor.remove('None')
     return nodes
-
 
 def display_adjacency_matrix(nodes):
 
@@ -114,7 +109,6 @@ def reset_ranks(nodes):
         node.rank = -1
     return nodes
 
-
 def has_cycle(nodes):
     for node in nodes:
         if node.rank == -1:
@@ -122,20 +116,17 @@ def has_cycle(nodes):
             return True
     return False
 
-
 def has_negative_edge(nodes):
     for node in nodes:
         if node.duration < 0:
             return True
     return False
 
-
 def check_rank_condition(nodes):
     for node in nodes:
         if node.in_neighbor == 'None':
             return False
     return True
-
 
 def get_ranks(nodes, copy_nodes):
     step = 0
@@ -160,7 +151,6 @@ def get_ranks(nodes, copy_nodes):
         step += 1
     return nodes
 
-
 def is_scheduling_graph(file_name, nodes):
     copy_nodes = init_nodes('./assets/{}.txt'.format(file_name))
     copy_nodes = standardize_nodes(copy_nodes)
@@ -172,7 +162,6 @@ def is_scheduling_graph(file_name, nodes):
     if has_negative_edge(nodes):
         res.append(2)
     return ([0], res)[len(res) > 0]
-
 
 def compute_earliest_dates(nodes):
     sorted_rank = sorted(nodes, key=lambda x: x.rank)
@@ -255,16 +244,6 @@ def compupte_free_float(nodes, earliest_dates, latest_dates):
             dict_free_float[node.letter] = min(all_successors_earliest_dates) - earliest_dates[node.letter] - node.duration
     return dict_free_float
 
-
-
-def compute_critical_path(nodes, earliest_dates, latest_dates):
-    critical_path = []
-    for node in nodes:
-        if earliest_dates[node.letter] == latest_dates[node.letter]:
-            critical_path.append(node.letter)
-    critical_path = sorted(critical_path, key=lambda x: [node.rank for node in nodes if node.letter == x][0])
-    return critical_path
-
 def get_all_paths(nodes_dict, start_node):
     # Initialize an empty list to store all possible paths
     all_paths = []
@@ -315,7 +294,6 @@ def get_all_critical_paths(nodes, earliest_dates, latest_dates):
     last_node = critical_nodes[-1]
 
     # compare the duration of each path with the earliest date of last_node
-    # if the duration of the path is equal to the earliest date of last_node, then the path is a critical path
     critical_paths = []
     for path in all_paths:
         duration = 0
@@ -327,11 +305,6 @@ def get_all_critical_paths(nodes, earliest_dates, latest_dates):
             critical_paths.append(path)    
 
     return critical_paths
-
-    
-
-
-
 
 def main():
     clear_terminal()
