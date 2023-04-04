@@ -212,6 +212,15 @@ def get_successors(nodes, node_letter):
         successors = 'None'
     return successors
 
+def get_all_latest_dates(successors, dict_latest_date, node):
+    all_latest_dates = []
+    if successors == 'None':
+        all_latest_dates.append(dict_latest_date[node.letter])
+    else:
+        for successor in successors:
+            all_latest_dates.append(dict_latest_date[successor] - node.duration)
+    return all_latest_dates
+
 def compute_latest_dates(nodes, earliest_dates):
     sorted_rank = sorted(nodes, key=lambda x: x.rank, reverse=True)
     dict_latest_date = {node.letter: 0 for node in sorted_rank}
@@ -220,11 +229,9 @@ def compute_latest_dates(nodes, earliest_dates):
         if successors == 'None':
             dict_latest_date[node.letter] = earliest_dates[node.letter]
         else:
-            min_latest_date = math.inf
-            for successor in successors:
-                if dict_latest_date[successor] < min_latest_date:
-                    min_latest_date = dict_latest_date[successor]
-            dict_latest_date[node.letter] = min_latest_date - node.duration
+            all_latest_dates = get_all_latest_dates(
+                successors, dict_latest_date, node)
+            dict_latest_date[node.letter] = min(all_latest_dates)
     
     dict_latest_date = {k: dict_latest_date[k] for k in earliest_dates}
     return dict_latest_date
@@ -236,27 +243,95 @@ def compute_total_float(nodes, earliest_dates, latest_dates):
     return dict_total_float
 
 def compupte_free_float(nodes, earliest_dates, latest_dates):
+    # get the free float of each node
     dict_free_float = {node.letter: 0 for node in nodes}
     for node in nodes:
         successors = get_successors(nodes, node.letter)
+        # get minimum earliest date of successors
         if successors == 'None':
             dict_free_float[node.letter] = 0
         else:
-            min_latest_date = math.inf
-            for successor in successors:
-                if latest_dates[successor] < min_latest_date:
-                    min_latest_date = latest_dates[successor]
-            dict_free_float[node.letter] = min_latest_date - earliest_dates[node.letter] - node.duration
+            all_successors_earliest_dates = [earliest_dates[successor] for successor in successors]
+            dict_free_float[node.letter] = min(all_successors_earliest_dates) - earliest_dates[node.letter] - node.duration
     return dict_free_float
+
+
 
 def compute_critical_path(nodes, earliest_dates, latest_dates):
     critical_path = []
     for node in nodes:
         if earliest_dates[node.letter] == latest_dates[node.letter]:
             critical_path.append(node.letter)
-    # sort critical path by rank
     critical_path = sorted(critical_path, key=lambda x: [node.rank for node in nodes if node.letter == x][0])
     return critical_path
+
+def get_all_paths(nodes_dict, start_node):
+    # Initialize an empty list to store all possible paths
+    all_paths = []
+
+    # Define a recursive function to traverse the graph and find all paths
+    def traverse(node, path):
+        # If we've reached the final node, append the current path to all_paths
+        if nodes_dict[node] == 'None':
+            all_paths.append(path)
+        # Otherwise, traverse each of the current node's successors
+        else:
+            for successor in nodes_dict[node]:
+                traverse(successor, path + [successor])
+
+    # Call the traverse function starting from the start_node
+    traverse(start_node, [start_node])
+
+    return all_paths
+
+
+def get_all_critical_paths(nodes, earliest_dates, latest_dates):
+    # get the nodes with total float = 0
+    critical_nodes = []
+    for node in nodes:
+        if earliest_dates[node.letter] == latest_dates[node.letter]:
+            critical_nodes.append(node.letter)
+    
+    dict_successors = {}
+    # get the critical successors of each node
+    for node in nodes:
+        successors = get_successors(nodes, node.letter)
+        if successors == 'None':
+            dict_successors[node.letter] = 'None'
+        else:
+            critical_successors = []
+            for successor in successors:
+                if earliest_dates[successor] == latest_dates[successor]:
+                    critical_successors.append(successor)
+            if critical_successors == []:
+                dict_successors[node.letter] = 'None'
+            else:
+                dict_successors[node.letter] = critical_successors
+    
+
+    # get all paths from the start node to the end node
+    all_paths = get_all_paths(dict_successors, 'a')
+
+    last_node = critical_nodes[-1]
+
+    # compare the duration of each path with the earliest date of last_node
+    # if the duration of the path is equal to the earliest date of last_node, then the path is a critical path
+    critical_paths = []
+    for path in all_paths:
+        duration = 0
+        for node in path:
+            for node2 in nodes:
+                if node2.letter == node:
+                    duration += node2.duration
+        if duration == earliest_dates[last_node]:
+            critical_paths.append(path)    
+
+    return critical_paths
+
+    
+
+
+
 
 def main():
     clear_terminal()
@@ -291,32 +366,37 @@ def main():
 
             # Compute earliest dates
             earliest_dates = compute_earliest_dates(nodes)
-            df_earliest_dates = pd.DataFrame.from_dict(earliest_dates, orient='index', columns=['Earliest date'])
+            df_earliest_dates = pd.DataFrame.from_dict(earliest_dates, orient='index', columns=[' '])
+            output += 'Earliest dates: ' + '\n'
             output += str(df_earliest_dates)
             output += ('\n\n')
 
             # Compute latest dates
             latest_dates = compute_latest_dates(nodes, earliest_dates)
-            df_latest_dates = pd.DataFrame.from_dict(latest_dates, orient='index', columns=['Latest date'])
+            df_latest_dates = pd.DataFrame.from_dict(latest_dates, orient='index', columns=[' '])
+            output += 'Latest dates: ' + '\n'
             output += str(df_latest_dates)
             output += ('\n\n')
 
             # Compute free float
             free_float = compupte_free_float(nodes, earliest_dates, latest_dates)
-            df_free_float = pd.DataFrame.from_dict(free_float, orient='index', columns=['Free float'])
+            df_free_float = pd.DataFrame.from_dict(free_float, orient='index', columns=[' '])
+            output += 'Free float: ' + '\n'
             output += str(df_free_float)
             output += ('\n\n')
 
             # Compute total float
             total_float = compute_total_float(nodes, earliest_dates, latest_dates)
-            df_total_float = pd.DataFrame.from_dict(total_float, orient='index', columns=['Total float'])
+            df_total_float = pd.DataFrame.from_dict(total_float, orient='index', columns=[' '])
+            output += 'Total float: ' + '\n'
             output += str(df_total_float)
             output += ('\n\n')
 
             # Compute critical path
-            critical_path = compute_critical_path(nodes, earliest_dates, latest_dates)
+            critical_path = get_all_critical_paths(nodes, earliest_dates, latest_dates)
             output += ('\n\nCritical path:') + '\n'
-            output += str(critical_path)
+            for path in critical_path:
+                output += (str(path)) + '\n'
 
         else:
             output +=('\n\nThis is not a scheduling graph :') + '\n'
