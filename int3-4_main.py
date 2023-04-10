@@ -2,6 +2,7 @@ import os
 import math
 import pandas as pd
 
+
 class Node:
     def __init__(self, letter='x', in_neighbor='None', duration=0, rank=-1) -> None:
         self.letter = letter
@@ -12,13 +13,16 @@ class Node:
     def __str__(self) -> str:
         return 'Node: {} | In Neigh: {} | Duration: {} | Rank: {}\n'.format(self.letter, self.in_neighbor, self.duration, self.rank)
 
+
 def clear_terminal():
     os.system('cls' if os.name == 'nt' else 'clear')
+
 
 def create_output_file(file_name, string_to_write):
     with open('./outputs/{}_output.txt'.format(file_name), 'w') as f:
         f.write(string_to_write)
     print('\nOutput file created: {}_output.txt\n'.format(file_name))
+
 
 def clean_line(line):
     for i in range(len(line)):
@@ -26,6 +30,7 @@ def clean_line(line):
     if line[-1] == '':
         line.pop()
     return line
+
 
 def init_nodes(file_name):
     nodes = []
@@ -40,6 +45,7 @@ def init_nodes(file_name):
     except FileNotFoundError:
         return 'File not found'
     return nodes
+
 
 def standardize_nodes(nodes):
     # add alpha node as supersource
@@ -72,6 +78,7 @@ def standardize_nodes(nodes):
     globals()['node_{}'.format(omega)].in_neighbor.remove('None')
     return nodes
 
+
 def display_adjacency_matrix(nodes):
 
     output = ""
@@ -100,14 +107,16 @@ def display_adjacency_matrix(nodes):
         row_label = node_letters[i].rjust(max_num_width)
         row_str = ' | '.join([str(x).ljust(max_num_width) for x in row])
         output += (('| {:^{width}} | ' + row_str +
-              ' |').format(row_label, width=max_num_width)) + '\n'
+                    ' |').format(row_label, width=max_num_width)) + '\n'
         output += (line + line.replace('-', '=') * len(node_letters)) + '\n'
     return output
+
 
 def reset_ranks(nodes):
     for node in nodes:
         node.rank = -1
     return nodes
+
 
 def has_cycle(nodes):
     for node in nodes:
@@ -116,17 +125,20 @@ def has_cycle(nodes):
             return True
     return False
 
+
 def has_negative_edge(nodes):
     for node in nodes:
         if node.duration < 0:
             return True
     return False
 
+
 def check_rank_condition(nodes):
     for node in nodes:
         if node.in_neighbor == 'None':
             return False
     return True
+
 
 def get_ranks(nodes, copy_nodes):
     step = 0
@@ -151,6 +163,7 @@ def get_ranks(nodes, copy_nodes):
         step += 1
     return nodes
 
+
 def is_scheduling_graph(file_name, nodes):
     copy_nodes = init_nodes('./assets/{}.txt'.format(file_name))
     copy_nodes = standardize_nodes(copy_nodes)
@@ -162,6 +175,7 @@ def is_scheduling_graph(file_name, nodes):
     if has_negative_edge(nodes):
         res.append(2)
     return ([0], res)[len(res) > 0]
+
 
 def compute_earliest_dates(nodes):
     sorted_rank = sorted(nodes, key=lambda x: x.rank)
@@ -192,6 +206,7 @@ def compute_earliest_dates(nodes):
 
     return dict_earliest_date
 
+
 def get_successors(nodes, node_letter):
     successors = []
     for node in nodes:
@@ -201,14 +216,17 @@ def get_successors(nodes, node_letter):
         successors = 'None'
     return successors
 
+
 def get_all_latest_dates(successors, dict_latest_date, node):
     all_latest_dates = []
     if successors == 'None':
         all_latest_dates.append(dict_latest_date[node.letter])
     else:
         for successor in successors:
-            all_latest_dates.append(dict_latest_date[successor] - node.duration)
+            all_latest_dates.append(
+                dict_latest_date[successor] - node.duration)
     return all_latest_dates
+
 
 def compute_latest_dates(nodes, earliest_dates):
     sorted_rank = sorted(nodes, key=lambda x: x.rank, reverse=True)
@@ -221,15 +239,18 @@ def compute_latest_dates(nodes, earliest_dates):
             all_latest_dates = get_all_latest_dates(
                 successors, dict_latest_date, node)
             dict_latest_date[node.letter] = min(all_latest_dates)
-    
+
     dict_latest_date = {k: dict_latest_date[k] for k in earliest_dates}
     return dict_latest_date
+
 
 def compute_total_float(nodes, earliest_dates, latest_dates):
     dict_total_float = {node.letter: 0 for node in nodes}
     for node in nodes:
-        dict_total_float[node.letter] = latest_dates[node.letter] - earliest_dates[node.letter]
+        dict_total_float[node.letter] = latest_dates[node.letter] - \
+            earliest_dates[node.letter]
     return dict_total_float
+
 
 def compupte_free_float(nodes, earliest_dates, latest_dates):
     # get the free float of each node
@@ -240,9 +261,12 @@ def compupte_free_float(nodes, earliest_dates, latest_dates):
         if successors == 'None':
             dict_free_float[node.letter] = 0
         else:
-            all_successors_earliest_dates = [earliest_dates[successor] for successor in successors]
-            dict_free_float[node.letter] = min(all_successors_earliest_dates) - earliest_dates[node.letter] - node.duration
+            all_successors_earliest_dates = [
+                earliest_dates[successor] for successor in successors]
+            dict_free_float[node.letter] = min(
+                all_successors_earliest_dates) - earliest_dates[node.letter] - node.duration
     return dict_free_float
+
 
 def get_all_paths(nodes_dict, start_node):
     # Initialize an empty list to store all possible paths
@@ -270,7 +294,7 @@ def get_all_critical_paths(nodes, earliest_dates, latest_dates):
     for node in nodes:
         if earliest_dates[node.letter] == latest_dates[node.letter]:
             critical_nodes.append(node.letter)
-    
+
     dict_successors = {}
     # get the critical successors of each node
     for node in nodes:
@@ -286,7 +310,6 @@ def get_all_critical_paths(nodes, earliest_dates, latest_dates):
                 dict_successors[node.letter] = 'None'
             else:
                 dict_successors[node.letter] = critical_successors
-    
 
     # get all paths from the start node to the end node
     all_paths = get_all_paths(dict_successors, 'a')
@@ -302,9 +325,10 @@ def get_all_critical_paths(nodes, earliest_dates, latest_dates):
                 if node2.letter == node:
                     duration += node2.duration
         if duration == earliest_dates[last_node]:
-            critical_paths.append(path)    
+            critical_paths.append(path)
 
     return critical_paths
+
 
 def main():
     clear_terminal()
@@ -339,44 +363,51 @@ def main():
 
             # Compute earliest dates
             earliest_dates = compute_earliest_dates(nodes)
-            df_earliest_dates = pd.DataFrame.from_dict(earliest_dates, orient='index', columns=[' '])
+            df_earliest_dates = pd.DataFrame.from_dict(
+                earliest_dates, orient='index', columns=[' '])
             output += 'Earliest dates: ' + '\n'
             output += str(df_earliest_dates)
             output += ('\n\n')
 
             # Compute latest dates
             latest_dates = compute_latest_dates(nodes, earliest_dates)
-            df_latest_dates = pd.DataFrame.from_dict(latest_dates, orient='index', columns=[' '])
+            df_latest_dates = pd.DataFrame.from_dict(
+                latest_dates, orient='index', columns=[' '])
             output += 'Latest dates: ' + '\n'
             output += str(df_latest_dates)
             output += ('\n\n')
 
             # Compute free float
-            free_float = compupte_free_float(nodes, earliest_dates, latest_dates)
-            df_free_float = pd.DataFrame.from_dict(free_float, orient='index', columns=[' '])
+            free_float = compupte_free_float(
+                nodes, earliest_dates, latest_dates)
+            df_free_float = pd.DataFrame.from_dict(
+                free_float, orient='index', columns=[' '])
             output += 'Free float: ' + '\n'
             output += str(df_free_float)
             output += ('\n\n')
 
             # Compute total float
-            total_float = compute_total_float(nodes, earliest_dates, latest_dates)
-            df_total_float = pd.DataFrame.from_dict(total_float, orient='index', columns=[' '])
+            total_float = compute_total_float(
+                nodes, earliest_dates, latest_dates)
+            df_total_float = pd.DataFrame.from_dict(
+                total_float, orient='index', columns=[' '])
             output += 'Total float: ' + '\n'
             output += str(df_total_float)
             output += ('\n\n')
 
             # Compute critical path
-            critical_path = get_all_critical_paths(nodes, earliest_dates, latest_dates)
+            critical_path = get_all_critical_paths(
+                nodes, earliest_dates, latest_dates)
             output += ('\n\nCritical path:') + '\n'
             for path in critical_path:
                 output += (str(path)) + '\n'
 
         else:
-            output +=('\n\nThis is not a scheduling graph :') + '\n'
+            output += ('\n\nThis is not a scheduling graph :') + '\n'
             if 1 in is_scheduling_graph(file_name, nodes):
-                output +=('- There is a cycle in the graph.') + '\n'
+                output += ('- There is a cycle in the graph.') + '\n'
             if 2 in is_scheduling_graph(file_name, nodes):
-                output +=('- There is a negative edge in the graph.')+ '\n' 
+                output += ('- There is a negative edge in the graph.') + '\n'
         create_output_file(file_name, output)
 
         # Ask the user if he wants to continue
